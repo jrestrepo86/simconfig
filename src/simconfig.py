@@ -1,10 +1,10 @@
 import argparse
 import time
 
-from launchers import make_launcher
-from read_file import parse_sim_config
-from sim_files import set_simulations
-from slurm_files import set_slurm_files
+from src.launchers import make_launcher
+from src.read_file import parse_sim_config
+from src.sim_files import set_simulations
+from src.slurm_files import set_slurm_files
 
 # Parse options
 parser = argparse.ArgumentParser(

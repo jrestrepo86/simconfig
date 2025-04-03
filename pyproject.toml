@@ -1,0 +1,28 @@
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "simconfig"
+version = "3.0"
+description = "Configuración de Simulaciones"
+authors = [{ name = "Juan F. Restrepo", email = "juan.restrepo@uner.edu.ar" }]
+license = { text = "MIT" }
+readme = "README.md"
+dependencies = ["progress", "pandas"]
+
+[project.urls]
+Homepage = "https://github.com/jrestrepo86/simconfig.git"
+
+[project.scripts]
+simconfig = "src.simconfig:main"
+
+[project.optional-dependencies]
+test = ["nose", "nose-cover3"]
+
+[tool.setuptools]
+packages = ["src"]
+
+[tool.setuptools.package-data]
+src = ["static/*", "templates/*"]
