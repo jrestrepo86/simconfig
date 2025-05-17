@@ -1,14 +1,21 @@
-# SimConfig — Simulation Configuration and SLURM Launcher Generator
+<p align="center">
+  <img src="assets/simconfig_logo.png" alt="SimConfig Logo" width="500"/>
+</p>
 
-**Author:** Juan F. Restrepo
-**Email:** [juan.restrepo@uner.edu.ar](mailto:juan.restrepo@uner.edu.ar)
-**Affiliation:** Laboratorio de Señales y Dinámicas no Lineales, Instituto de Bioingeniería y Bioinformática, CONICET - Universidad Nacional de Entre Ríos, Argentina.
+<p align="center">
+  <b>Automate the creation of parameterized simulations and SLURM launchers for HPC clusters</b><br>
+  <i>Developed by Juan F. Restrepo — CONICET / Universidad Nacional de Entre Ríos</i>
+</p>
 
 ---
 
 ## 📖 Introduction
 
-SimConfig is a Python package for configuring and launching parameterized simulation batches on SLURM clusters. It allows defining simulation variables and environments directly inside your source files (`.py` or `.m`), then auto-generates simulation files, SBATCH scripts, and launcher files for efficient execution.
+SimConfig is a Python package for configuring and launching parameterized
+simulation batches on SLURM clusters. It allows defining simulation variables
+and environments directly inside your source files (`.py` or `.m`), then
+auto-generates simulation files, SBATCH scripts, and launcher files for
+efficient execution.
 
 ---
 
@@ -148,7 +155,8 @@ disp(['exp01=' exp01]);
 
 ## ✨ Features
 
-- **Automatic file generation**: simulation scripts, SLURM scripts, group launchers, and global runner.
+- **Automatic file generation**: simulation scripts, SLURM scripts, group
+  launchers, and global runner.
 - **Virtual environment support**: Conda and Pip.
 - **Platform-specific SLURM configs** for environments like `neptuno` or `jupiter`.
 - **Structured naming** of output directories and filenames based on parameters.
@@ -156,15 +164,29 @@ disp(['exp01=' exp01]);
 
 ---
 
-## 📤 Output
+## 📤 Output Structure
 
 SimConfig will create the following:
+
+```
+bash
+simconfig/
+├── VAR_COMBO/                # Individual simulations
+│   └── E01_C1P1T1.py
+├── SBATCH/                   # SLURM job scripts
+│   └── E01_C1P1T1.sh
+├── launchers/
+│   ├── jobs/                 # Job launcher scripts
+│   └── C1_P1.sh              # Group launcher
+├── run_E01.sh                # Main runner with conda activation
+```
 
 - `simconfig/VAR_COMBO/`: Folder for each parameter combination.
 - `SBATCH/`: Folder containing SLURM job scripts.
 - `launchers/jobs/`: Individual launch scripts.
 - `launchers/GROUP.sh`: Grouped launchers for each parameter set.
-- `run_<name>.sh`: Main executable to run all simulations and check the SLURM queue.
+- `run_<name>.sh`: Main executable to run all simulations and check the SLURM
+  queue.
 
 ---
 
@@ -195,6 +217,7 @@ bash run_E01.sh
 
 ## 📜 License
 
-**MIT License** – Free for personal and commercial use. See the `LICENSE` file or [MIT License](https://opensource.org/licenses/MIT).
+**MIT License** – Free for personal and commercial use. See the `LICENSE` file
+or [MIT License](https://opensource.org/licenses/MIT).
 
 ---
