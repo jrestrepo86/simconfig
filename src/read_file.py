@@ -36,7 +36,7 @@ def parse_sim_config(filename):
             simconfig_vars[key] = evaluated
     filename = Path(filename)
     simconfig_vars["source-filename"] = filename
-    simconfig_vars["root-path"] = filename.parent
+    simconfig_vars["root-path"] = filename.parent / "simconfig"
     simconfig_vars["extension"] = filename.suffix
     source_file_content = read_content(filename)
     slurm_config = read_slurm_config(filename)

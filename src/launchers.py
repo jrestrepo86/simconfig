@@ -1,92 +1,128 @@
 import time
-from pathlib import Path
-
-import pandas as pd
 
 
 def make_launcher(sims, simconfig_vars):
-
     sim_name = simconfig_vars["name"]
     root_path = simconfig_vars["root-path"]
+    job_scripts_dir = root_path / "launchers" / "jobs"
+    job_scripts_dir.mkdir(parents=True, exist_ok=True)
 
-    launcher_array = []
+    launcher_groups = {}
     for sim in sims:
-        launcher_file_name, content = single_sim_content(sim)
-        launcher_array.append((launcher_file_name, content))
-    launchers_info = pd.DataFrame(launcher_array, columns=["launcher-group", "content"])
-    # Group by launcher-name and concatenate the content
-    merged_launchers = launchers_info.groupby("launcher-group", as_index=False).agg(
-        {"content": "\n".join}
-    )
-    launchers_filenames = write_launchers_to_files(
-        merged_launchers, output_dir=root_path / "launchers"
-    )
-    make_runfile(sim_name, root_path, launchers_filenames)
+        launcher_group, content = generate_individual_job_script(
+            sim, job_scripts_dir, simconfig_vars
+        )
+        if launcher_group not in launcher_groups:
+            launcher_groups[launcher_group] = []
+        launcher_groups[launcher_group].append(sim)
+
+    launcher_files = write_group_launchers(launcher_groups, root_path)
+    make_runfile(sim_name, root_path, launcher_files, simconfig_vars)
 
 
-def single_sim_content(sim):
-
-    slurm_filename = sim["slurm-filename"]
+def generate_individual_job_script(sim, job_scripts_dir, simconfig_vars):
     launcher_group = sim["launcher-group"]
+    slurm_filename = sim["slurm-filename"]
     process_name = slurm_filename.stem
 
-    content = (
-        "#============================================================\n"
-        f"# Proceso {process_name} \n"
-        f"echo 'lanzando proceso: {process_name} '\n"
-        f"sbatch {slurm_filename} &\n"
-        "sleep 0.3"
-    )
+    job_script_path = job_scripts_dir / f"{process_name}.sh"
+
+    log_per_group = simconfig_vars.get("log-per-group", True)
+    if log_per_group:
+        log_path = f'$(dirname "$0")/../../logs/launchers/{launcher_group}.log'
+    else:
+        log_path = f'$(dirname "$0")/../../logs/launchers/{process_name}.log'
+
+    job_path = f'$(dirname "$0")/../../{slurm_filename.relative_to(job_scripts_dir.parent.parent)}'
+
+    content = f"""#!/bin/sh
+# Proceso {process_name}
+
+start_time=$(date +%s)
+mkdir -p $(dirname \"{log_path}\")
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Lanzando proceso: {process_name}" >> {log_path}
+
+if [ -f "{job_path}" ]; then
+    sbatch "{job_path}"
+    status=$?
+    if [ "$status" -eq 0 ]; then
+        echo "[$(date +'%Y-%m-%d %H:%M:%S')] ✓ Enviado: {process_name}" >> {log_path}
+    else
+        echo "[$(date +'%Y-%m-%d %H:%M:%S')] ❌ Error al enviar: {process_name} (code=$status)" >> {log_path}
+    fi
+else
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] ⚠️ Archivo no encontrado: {job_path}" >> {log_path}
+fi
+
+end_time=$(date +%s)
+duration=$((end_time - start_time))
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] ⏱️ Duración: $duration s para {process_name}" >> {log_path}
+sleep 0.3
+"""
+
+    with open(job_script_path, "w", encoding="utf-8") as f:
+        f.write(content)
+
     return launcher_group, content
 
 
-def write_launchers_to_files(merged_launchers, output_dir):
-    """
-    Write merged launcher content to files.
-
-    Args:
-        merged_launchers (pd.DataFrame): DataFrame from make_launcher() containing
-                                          "launcher-name" and "content" columns
-        output_dir (str/path): Directory where launcher files will be saved
-    """
-
-    output_path = Path(output_dir)
-    output_path.mkdir(parents=True, exist_ok=True)  # Create directory if needed
+def write_group_launchers(groups, root_path):
+    launcher_dir = root_path / "launchers"
     date = time.strftime("%d/%m/%Y")
+    launcher_files = []
 
-    launchers_filenames = []
-    for _, row in merged_launchers.iterrows():
-        launcher_name = row["launcher-group"]
-        content = row["content"]
+    for group, sims in groups.items():
+        lines = ["#!/bin/sh", f"# Lanzador de grupo: {group}"]
+        for sim in sims:
+            process_name = sim["slurm-filename"].stem
+            job_script_path = f'$(dirname "$0")/jobs/{process_name}.sh'
+            lines.append(f"bash {job_script_path}")
 
-        # add line to content begin
-        content = (
-            "#!/bin/sh\n"
-            + content
-            + f"\n\n# Generado automaticamente por SimConfig - {date}"
-        )
-        # Create filename with .sh extension
-        filename = output_path / f"{launcher_name}.sh"
-        launchers_filenames.append(filename)
+        lines.append(f"# Generado automaticamente por SimConfig - {date}")
+        full_path = launcher_dir / f"{group}.sh"
+        with open(full_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines))
+        launcher_files.append(full_path)
 
-        # Write content to file
-        with open(filename, "w", encoding="utf-8") as f:
-            f.write(content)
-    return launchers_filenames
+    return launcher_files
 
 
-def make_runfile(sim_name, root_path, launchers_filenames):
+def make_runfile(sim_name, root_path, launchers_filenames, simconfig_vars):
     filename = root_path / f"run_{sim_name}.sh"
     date = time.strftime("%d/%m/%Y")
-
     content = ["#!/bin/sh"]
+
+    # Conda environment activation
+    env = simconfig_vars.get("venv", {})
+    env_type = env.get("type", "conda")
+    env_name = env.get("conda-env", "base")
+
+    content += [
+        "# ---- Conda Environment Activation ----",
+        'if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then',
+        '    . "$HOME/miniconda3/etc/profile.d/conda.sh"',
+        'elif [ -f "$HOME/anaconda3/etc/profile.d/conda.sh" ]; then',
+        '    . "$HOME/anaconda3/etc/profile.d/conda.sh"',
+        "elif command -v conda &>/dev/null; then",
+        "    CONDA_BASE=$(conda info --base 2>/dev/null)",
+        '    . "$CONDA_BASE/etc/profile.d/conda.sh"',
+        "else",
+        '    echo "Error: conda.sh not found" >&2',
+        "    exit 1",
+        "fi",
+        f"conda activate {env_name}",
+        "",
+    ]
+
     for launcher in launchers_filenames:
         launcher_name = launcher.stem
-        text = f"# {launcher_name}\n" f"./{launcher}"
-        content.append(text)
+        relative_path = launcher.relative_to(root_path)
+        content.append("\n#==========================================")
+        content.append(f"# {launcher_name}")
+        content.append(f'bash "$(dirname "$0")/{relative_path}"')
 
-    content.append("\nsqueue\n")
+    content.append("\nsqueue")
     content.append(f"# Generado automaticamente por SimConfig - {date}")
-    content = "\n#==========================================\n".join(content)
+
     with open(filename, "w", encoding="utf-8") as f:
-        f.write(content)
+        f.write("\n".join(content))

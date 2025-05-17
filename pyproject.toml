@@ -6,20 +6,26 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "simconfig"
 version = "3.0"
-description = "Configuración de Simulaciones"
-authors = [{ name = "Juan F. Restrepo", email = "juan.restrepo@uner.edu.ar" }]
+description = "Automated configuration and launcher generation for parameterized simulations using SLURM"
 license = { text = "MIT" }
 readme = "README.md"
-dependencies = ["progress", "pandas"]
+authors = [{ name = "Juan F. Restrepo", email = "juan.restrepo@uner.edu.ar" }]
+requires-python = ">=3.8"
+dependencies = ["progress>=1.6", "pandas>=1.3"]
+
 
 [project.urls]
 Homepage = "https://github.com/jrestrepo86/simconfig.git"
+Repository = "https://github.com/jrestrepo86/simconfig"
+Issues = "https://github.com/jrestrepo86/simconfig/issues"
 
 [project.scripts]
 simconfig = "src.simconfig:main"
 
 [project.optional-dependencies]
 test = ["nose", "nose-cover3"]
+dev = ["black", "ruff", "mypy"]
+
 
 [tool.setuptools]
 packages = ["src"]
