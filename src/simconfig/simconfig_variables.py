@@ -6,7 +6,7 @@ simconfig_vars = {
     "realizations": {},
     "matexecutable": "matlab",
     "pyexecutable": "python3",
-    "venv": {"type": "conda", "conda-env": "base", "pip-env": "./.env"},
+    "venv": {"type": "conda", "env-name": "base"},
 }
 slurm_config = {
     "host-name": "",

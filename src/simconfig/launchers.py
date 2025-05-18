@@ -92,11 +92,11 @@ def make_runfile(sim_name, root_path, launchers_filenames, simconfig_vars):
     date = time.strftime("%d/%m/%Y")
     content = ["#!/bin/sh"]
 
-    # Conda environment activation
     env = simconfig_vars.get("venv", {})
-    env_type = env.get("type", "conda")
-    env_name = env.get("conda-env", "base")
+    env_type = env.get("type", "venv")
+    env_name = env.get("env-name", "base" if env_type == "conda" else None)
 
+    # Conda environment activation
     if env_type == "conda":
         content += [
             "# ---- Conda Environment Activation ----",
@@ -112,6 +112,13 @@ def make_runfile(sim_name, root_path, launchers_filenames, simconfig_vars):
             "    exit 1",
             "fi",
             f"conda activate {env_name}",
+            "",
+        ]
+    # env environment activation
+    elif env_type == "venv" and env_name:
+        content += [
+            "# ---- Python venv Activation ----",
+            f"source {env_name}/bin/activate",
             "",
         ]
 

@@ -89,7 +89,7 @@ name='E01'
 variables={'condition':[1,2],'pathology':[1,3]}
 realizations={'exp01':2}
 pyexecutable='python3.10'
-venv={'type': 'conda', 'conda-env': 'base'}
+venv={'type': 'conda', 'env-name': 'base'}
 [endSimConfig]
 
 [SlurmConfig]
@@ -147,8 +147,25 @@ exp01 = 1;
 disp(['condition=' condition]);
 disp(['pathology=' pathology]);
 disp(['exp01=' exp01]);
+```
 
+---
 
+## Virtual Environment Configuration
+
+The [SimConfig] section can define a virtual environment to activate before
+running simulations. Supported types:
+
+- conda: Activates a conda environment.
+
+- venv: Activates a Python virtual environment from a specified path.
+
+Configuration options:
+
+```
+venv = {"type": "conda", "env-name": "base"}  # Default for conda is "base"
+venv = {"type": "venv", "env-name": "./.venv"}  # Path to the Python venv
+venv = {"type": "venv"}                         # No activation if path not given
 ```
 
 ---

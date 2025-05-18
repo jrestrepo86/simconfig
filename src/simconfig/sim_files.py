@@ -5,26 +5,21 @@ from copy import deepcopy
 
 
 def set_simulations(simconfig_vars, content):
-
     root_dir = simconfig_vars["root-path"]
     base_name = simconfig_vars["name"]
     extension = simconfig_vars["extension"]
 
     # enviroment
-    env_type = None
-    env_name = None
     if "venv" in simconfig_vars:
-        env_type = simconfig_vars["venv"]["type"]
+        env_type = simconfig_vars["venv"].get("type", "venv")
         if env_type == "conda":
-            env_name = simconfig_vars["venv"]["conda-env"]
-            if env_name.strip() == "":
-                env_name = "base"
-        elif env_type == "pip":
-            env_name = simconfig_vars["venv"]["pip-env"]
-            if env_name.strip() == "":
-                env_name = None
+            env_name = simconfig_vars["venv"].get("env-name", "base")
+        elif env_type == "venv":
+            env_name = simconfig_vars["venv"].get("env-name", None)
+        else:
+            env_name = None
     else:
-        env_type = "pip"
+        env_type = "venv"
         env_name = None
 
     # variables values
@@ -40,7 +35,6 @@ def set_simulations(simconfig_vars, content):
         vars_ = dict(zip(variables_names, params))
 
         for realization in realization_values:
-
             full_path, launcher_group = set_sim_filename(
                 vars_, realization, base_name, root_dir, extension
             )

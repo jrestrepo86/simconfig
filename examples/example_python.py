@@ -6,7 +6,7 @@ name='E01'
 variables={'condition':[1,2],'pathology':[1,3]}
 realizations={'exp01':2}
 pyexecutable='python3.10'
-venv={'type': 'conda', 'conda-env': 'base', 'pip-env': './.env'}
+venv = {"type": "conda", "env-name": "base"}
 [endSimConfig]
 [SlurmConfig]
 slurm = { 'neptuno':[

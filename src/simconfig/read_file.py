@@ -3,6 +3,7 @@
 import ast
 import re
 import socket
+import subprocess
 from pathlib import Path
 
 from simconfig.simconfig_variables import simconfig_vars, slurm_config
@@ -38,6 +39,48 @@ def parse_sim_config(filename):
     simconfig_vars["source-filename"] = filename
     simconfig_vars["root-path"] = filename.parent / "simulation"
     simconfig_vars["extension"] = filename.suffix
+
+    # Normalize venv config early
+    venv = simconfig_vars.get("venv", {})
+    venv_type = venv.get("type", "venv")
+    venv_name = venv.get("env-name")
+
+    if venv_type == "conda":
+        if not venv_name or not isinstance(venv_name, str) or not venv_name.strip():
+            venv_name = "base"
+    elif venv_type == "venv":
+        if not venv_name or not isinstance(venv_name, str) or not venv_name.strip():
+            venv_name = None
+    else:
+        venv_type = "venv"
+        venv_name = None
+
+    if venv_type == "venv" and venv_name is not None:
+        venv_path = Path(venv_name).expanduser().resolve()
+        if not (venv_path / "bin" / "activate").exists():
+            print(
+                f"⚠️ Warning: Virtual environment not found at {venv_path}/bin/activate — the script will continue."
+            )
+    elif venv_type == "conda" and venv_name:
+        try:
+            output = subprocess.check_output(
+                ["conda", "info", "--envs"], stderr=subprocess.DEVNULL, text=True
+            )
+            if not any(
+                line.split()[0] == venv_name
+                for line in output.splitlines()
+                if line and not line.startswith("#")
+            ):
+                print(
+                    f"⚠️ Warning: Conda environment '{venv_name}' not found in `conda info --envs` — continuing anyway."
+                )
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            print(
+                "⚠️ Warning: Could not verify Conda environment (is Conda installed and in PATH?)."
+            )
+
+    simconfig_vars["venv"] = {"type": venv_type, "env-name": venv_name}
+
     source_file_content = read_content(filename)
     slurm_config = read_slurm_config(filename)
     return simconfig_vars, slurm_config, source_file_content
