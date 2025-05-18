@@ -1,21 +1,9 @@
 """Read file info"""
 
-import os
-import sys
-from pathlib import Path
-
-try:
-    from src.launchers import make_launcher
-    from src.read_file import parse_sim_config
-    from src.sim_files import set_simulations
-    from src.slurm_files import set_slurm_files
-except ImportError:
-    sys.path.append(str(Path(__file__).parent.parent))
-    from src.launchers import make_launcher
-    from src.read_file import parse_sim_config
-    from src.sim_files import set_simulations
-    from src.slurm_files import set_slurm_files
-
+from simconfig.launchers import make_launcher
+from simconfig.read_file import parse_sim_config
+from simconfig.sim_files import set_simulations
+from simconfig.slurm_files import set_slurm_files
 
 if __name__ == "__main__":
     filename = "../examples/example_python.py"

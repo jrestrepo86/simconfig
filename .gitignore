@@ -173,7 +173,7 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-simconfig/
+simulation/
 launchers/
 *.sh
 C*

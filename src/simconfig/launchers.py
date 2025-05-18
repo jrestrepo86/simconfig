@@ -97,22 +97,23 @@ def make_runfile(sim_name, root_path, launchers_filenames, simconfig_vars):
     env_type = env.get("type", "conda")
     env_name = env.get("conda-env", "base")
 
-    content += [
-        "# ---- Conda Environment Activation ----",
-        'if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then',
-        '    . "$HOME/miniconda3/etc/profile.d/conda.sh"',
-        'elif [ -f "$HOME/anaconda3/etc/profile.d/conda.sh" ]; then',
-        '    . "$HOME/anaconda3/etc/profile.d/conda.sh"',
-        "elif command -v conda &>/dev/null; then",
-        "    CONDA_BASE=$(conda info --base 2>/dev/null)",
-        '    . "$CONDA_BASE/etc/profile.d/conda.sh"',
-        "else",
-        '    echo "Error: conda.sh not found" >&2',
-        "    exit 1",
-        "fi",
-        f"conda activate {env_name}",
-        "",
-    ]
+    if env_type == "conda":
+        content += [
+            "# ---- Conda Environment Activation ----",
+            'if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then',
+            '    . "$HOME/miniconda3/etc/profile.d/conda.sh"',
+            'elif [ -f "$HOME/anaconda3/etc/profile.d/conda.sh" ]; then',
+            '    . "$HOME/anaconda3/etc/profile.d/conda.sh"',
+            "elif command -v conda &>/dev/null; then",
+            "    CONDA_BASE=$(conda info --base 2>/dev/null)",
+            '    . "$CONDA_BASE/etc/profile.d/conda.sh"',
+            "else",
+            '    echo "Error: conda.sh not found" >&2',
+            "    exit 1",
+            "fi",
+            f"conda activate {env_name}",
+            "",
+        ]
 
     for launcher in launchers_filenames:
         launcher_name = launcher.stem
