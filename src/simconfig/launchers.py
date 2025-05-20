@@ -39,24 +39,29 @@ def generate_individual_job_script(sim, job_scripts_dir, simconfig_vars):
 # Proceso {process_name}
 
 start_time=$(date +%s)
-mkdir -p $(dirname \"{log_path}\")
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Lanzando proceso: {process_name}" >> {log_path}
 
-if [ -f "{job_path}" ]; then
-    sbatch "{job_path}"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+LOG_PATH="$SCRIPT_DIR/../../logs/launchers/{launcher_group}.log"
+SBATCH_SCRIPT="$SCRIPT_DIR/../../{slurm_filename.relative_to(job_scripts_dir.parent.parent)}"
+
+mkdir -p "$(dirname "$LOG_PATH")"
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] Lanzando proceso: {process_name}" >> "$LOG_PATH"
+
+if [ -f "$SBATCH_SCRIPT" ]; then
+    sbatch "$SBATCH_SCRIPT"
     status=$?
     if [ "$status" -eq 0 ]; then
-        echo "[$(date +'%Y-%m-%d %H:%M:%S')] ✓ Enviado: {process_name}" >> {log_path}
+        echo "[$(date +'%Y-%m-%d %H:%M:%S')] ✓ Enviado: {process_name}" >> "$LOG_PATH"
     else
-        echo "[$(date +'%Y-%m-%d %H:%M:%S')] ❌ Error al enviar: {process_name} (code=$status)" >> {log_path}
+        echo "[$(date +'%Y-%m-%d %H:%M:%S')] ❌ Error al enviar: {process_name} (code=$status)" >> "$LOG_PATH"
     fi
 else
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] ⚠️ Archivo no encontrado: {job_path}" >> {log_path}
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] ⚠️ Archivo no encontrado: $SBATCH_SCRIPT" >> "$LOG_PATH"
 fi
 
 end_time=$(date +%s)
 duration=$((end_time - start_time))
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] ⏱️ Duración: $duration s para {process_name}" >> {log_path}
+echo "[$(date +'%Y-%m-%d %H:%M:%S')] ⏱️ Duración: $duration s para {process_name}" >> "$LOG_PATH"
 sleep 0.3
 """
 
@@ -134,3 +139,6 @@ def make_runfile(sim_name, root_path, launchers_filenames, simconfig_vars):
 
     with open(filename, "w", encoding="utf-8") as f:
         f.write("\n".join(content))
+
+    # Make the run script executable
+    filename.chmod(0o755)

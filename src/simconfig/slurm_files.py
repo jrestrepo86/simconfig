@@ -1,6 +1,8 @@
 import copy
 import time
 
+from pathlib import Path
+
 
 def set_slurm_files(sims, slurm_config):
     for sim in sims:
@@ -30,12 +32,12 @@ def set_slurm_content(sim, slurm_config):
     if slurm_options is None:
         slurm_options = copy.deepcopy(slurm_config.get("neptuno"))
 
-    # set slurm error file path
-    if not any(opt.startswith("error=") for opt in slurm_options):
-        slurm_options.append("error=job.%J.err")
-    # set slurm output file path
-    if not any(opt.startswith("output=") for opt in slurm_options):
-        slurm_options.append("output=job.%J.out")
+    # # set slurm error file path
+    # if not any(opt.startswith("error=") for opt in slurm_options):
+    #     slurm_options.append("error=job.%J.err")
+    # # set slurm output file path
+    # if not any(opt.startswith("output=") for opt in slurm_options):
+    #     slurm_options.append("output=job.%J.out")
 
     # options to content
     slurm_content = ["#!/bin/sh"] + [f"## hostname: {host_name}"]
@@ -49,19 +51,16 @@ def set_slurm_content(sim, slurm_config):
 
 
 def set_run_content(fullpath, executable):
-    # sim_dir = fullpath.parent
     filename = fullpath.name
     sim_name = fullpath.stem
-    # run_content = ["cd .."]
-    # run_content.append(f"chmod u+w {filename}")
-    run_content = [
-        'cd "$(dirname "$0")/.." || exit 1',
+    sim_dir = Path(fullpath.parent).resolve()
+
+    return [
+        f'cd "{sim_dir}" || exit 1',
         f"chmod u+w {filename}",
+        "export PYTHONUNBUFFERED=1",
+        f"{executable} {filename} > out_{sim_name}.txt 2> err_{sim_name}.txt",
     ]
-    run_content.append("export PYTHONUNBUFFERED=1")
-    exec_line = f"{executable} {filename} >out_{sim_name}.txt 2>err_{sim_name}.txt &"
-    run_content.append(exec_line)
-    return run_content
 
 
 def write_slurm_sbatch_files(sim):
