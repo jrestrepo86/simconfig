@@ -1,6 +1,5 @@
 import copy
 import time
-
 from pathlib import Path
 
 
@@ -40,7 +39,7 @@ def set_slurm_content(sim, slurm_config):
     #     slurm_options.append("output=job.%J.out")
 
     # options to content
-    slurm_content = ["#!/bin/sh"] + [f"## hostname: {host_name}"]
+    slurm_content = ["#!/bin/bash"] + [f"## hostname: {host_name}"]
     for opt in slurm_options:
         slurm_content.append(f"#SBATCH --{opt}")
 

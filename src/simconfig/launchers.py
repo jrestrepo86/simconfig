@@ -35,7 +35,7 @@ def generate_individual_job_script(sim, job_scripts_dir, simconfig_vars):
 
     job_path = f'$(dirname "$0")/../../{slurm_filename.relative_to(job_scripts_dir.parent.parent)}'
 
-    content = f"""#!/bin/sh
+    content = f"""#!/bin/bash
 # Proceso {process_name}
 
 start_time=$(date +%s)
@@ -77,7 +77,7 @@ def write_group_launchers(groups, root_path):
     launcher_files = []
 
     for group, sims in groups.items():
-        lines = ["#!/bin/sh", f"# Lanzador de grupo: {group}"]
+        lines = ["#!/bin/bash", f"# Lanzador de grupo: {group}"]
         for sim in sims:
             process_name = sim["slurm-filename"].stem
             job_script_path = f'$(dirname "$0")/jobs/{process_name}.sh'
@@ -95,7 +95,7 @@ def write_group_launchers(groups, root_path):
 def make_runfile(sim_name, root_path, launchers_filenames, simconfig_vars):
     filename = root_path / f"run_{sim_name}.sh"
     date = time.strftime("%d/%m/%Y")
-    content = ["#!/bin/sh"]
+    content = ["#!/bin/bash"]
 
     env = simconfig_vars.get("venv", {})
     env_type = env.get("type", "venv")
